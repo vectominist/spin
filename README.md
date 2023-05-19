@@ -3,15 +3,14 @@
  - [Introduction](#Introduction)
  - [Citation](#Citation)  
  - [Getting Started](#Getting-Started)
-     - [Environment](#1.-Environment)
-     - [Prepare Data](#2.-Prepare-Data)
-     - [Customize Configurations](#3.-Customize-Configurations)
-     - [Training](#4.-Training)
-     - [Downstream Evaluation](#5.-Downstream-Evaluation)
  - [Pre-trained Models](#Pre-trained-Models)
  - [References](#References)
  - [Contact](#Contact)
-
+     <!-- - [Environment](#1.-Environment)
+     - [Prepare Data](#2.-Prepare-Data)
+     - [Customize Configurations](#3.-Customize-Configurations)
+     - [Training](#4.-Training)
+     - [Downstream Evaluation](#5.-Downstream-Evaluation) -->
 
 ## Introduction
 
