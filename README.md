@@ -1,10 +1,13 @@
 # Speaker-invariant Clustering (Spin)
 
-🚧 WIP 🚧
-
  - [Introduction](#Introduction)
  - [Citation](#Citation)  
  - [Getting Started](#Getting-Started)
+     1. [Environment](#1.-Environment)
+     2. [Prepare Data](#2.-Prepare-Data)
+     3. [Customize Configurations](#3.-Customize-Configurations)
+     4. [Training](#4.-Training)
+     5. [Downstream Evaluation](#5.-Downstream-Evaluation)
  - [Pre-trained Models](#Pre-trained-Models)
  - [References](#References)
  - [Contact](#Contact)
@@ -14,7 +17,7 @@
 
 <p align="center"><img src="https://github.com/vectominist/spin/blob/main/figure/spin.png?raw=true" alt="Spin framework." width="800"/></p>
 
-This repository is the official PyTorch implementation of the **Speaker-invariant Clustering** (**Spin**) proposed in the **Interspeech 2023** paper [Self-supervised Fine-tuning for Improved Content Representations by Speaker-invariant Clustering]() ([Heng-Jui Chang](https://people.csail.mit.edu/hengjui/), [Alexander H. Liu](https://alexander-h-liu.github.io/), [James Glass](https://www.csail.mit.edu/person/jim-glass); [MIT CSAIL](https://www.csail.mit.edu/)).
+This repository is the official PyTorch implementation of the **Speaker-invariant Clustering** (**Spin**) proposed in the **Interspeech 2023** paper [Self-supervised Fine-tuning for Improved Content Representations by Speaker-invariant Clustering](https://arxiv.org/abs/2305.11072) ([Heng-Jui Chang](https://people.csail.mit.edu/hengjui/), [Alexander H. Liu](https://alexander-h-liu.github.io/), [James Glass](https://www.csail.mit.edu/person/jim-glass); [MIT CSAIL](https://www.csail.mit.edu/)).
 
 Spin is a novel self-supervised learning method that clusters speech representations and performs swapped prediction between the original and speaker-perturbed utterances. Spin *disentangles speaker information* and preserves *content representations* with just 45 minutes of fine-tuning on a single GPU (HuBERT Base models). Spin improves pre-trained networks and outperforms prior methods in speech recognition and acoustic unit discovery.
 
@@ -33,7 +36,7 @@ Please cite our paper if you find this repository and/or the paper useful.
 
 ## Getting Started
 
-### Environment Installation
+### 1. Environment
 Make sure `sox` is installed and your Python version is at least `3.6`.
 ```bash
 # Create virtual environment
@@ -57,7 +60,8 @@ cp s3prl_py/WavLM.py ../s3prl/s3prl/upstream/wavlm/WavLM.py
 ```
 
 
-### Download Data
+### 2. Prepare Data
+Download required data.
 ```bash
 # Create a directory to save data (or any other path you like)
 mkdir data
@@ -82,53 +86,43 @@ wget https://huggingface.co/datasets/vectominist/spin_data/resolve/main/dev-othe
 wget https://huggingface.co/datasets/vectominist/spin_data/resolve/main/spk2info.dict
 ```
 
-### Prepare Dataset
-See `script/prepare.sh`.
+Prepare LibriSpeech dataset, see [`script/prepare.sh`](https://github.com/vectominist/spin/blob/main/script/prepare.sh).
 - `libri_dir`: the directory of the LibriSpeech corpus
 - `json_dir`: the directory to save `.json` files generated from `prepare_data.py`
 ```bash
 bash script/prepare.sh ${libri_dir} ${json_dir}
 ```
 
-### Customize Configurations
-See `config/spin.yaml`.
+### 3. Customize Configurations
+See [`config/spin.yaml`](https://github.com/vectominist/spin/blob/main/config/spin.yaml).
 - Modify `json_dir`, `spk2info`, and `phn_dir` according to the directories with the downloaded and preprocessed data.
 - Modify `logger` to switch to other loggers or simply setting it to `False` to disable logging.
 ```yaml
 data:
   json_dir: /path/to/json_dir
-  splits:
-    - train-clean-100
-  sample_rate: 16000
-  min_audio_len: 40000
-  random_crop_len: 272000
   spk2info: /path/to/spk2info.dict
 
 val_data:
   json_dir: /path/to/json_dir
-  phn_dir: /path/to/phoneme/alignments
-  splits:
-    - dev-clean
-    - dev-other
-  sample_rate: 16000
+  phn_dir: /path/to/phoneme/alignments/dir
 
 trainer:
   logger: wandb  # specify a pytorch-lightning logger you prefer
 ```
 
-### Training
-See `script/train.sh`.
+### 4. Training
+See [`script/train.sh`](https://github.com/vectominist/spin/blob/main/script/train.sh).
 - `exp_dir`: the directory to save checkpoints
 - `exp_name`: experiment name
-- See `src/task/train_spin.py` for details about available arguments like number of GPUs to be used.
+- See [`src/task/train_spin.py`](https://github.com/vectominist/spin/blob/main/src/task/train_spin.py) for details about available arguments like number of GPUs to be used.
 ```bash
 bash script/train.sh ${exp_dir} ${exp_name}
 ```
 The trained model checkpoints can be found in `${exp_dir}/${exp_name}`. Note that we use `last.ckpt` for evaluation and downstream tasks.
 
-### Downstream Evaluation
+### 5. Downstream Evaluation
 We use the [s3prl](https://github.com/s3prl/s3prl) toolkit for [SUPERB](https://arxiv.org/abs/2105.01051) downstream tasks.
-- Modify line 26 of `s3prl_py/spin/expert.py` to the absolute path to `spin/`.
+- Modify [line 26](https://github.com/vectominist/spin/blob/main/s3prl_py/spin/expert.py#L26) of [`s3prl_py/spin/expert.py`](https://github.com/vectominist/spin/blob/main/s3prl_py/spin/expert.py) to the absolute path to `spin/`.
 - Copy the `s3prl_py/spin` directory to `s3prl` so that the toolkit can load the models.
   ```bash
   cp -R s3prl_py/spin ../s3prl/s3prl/upstream/spin
@@ -140,7 +134,7 @@ We use the [s3prl](https://github.com/s3prl/s3prl) toolkit for [SUPERB](https://
 
 
 ## Pre-trained Models
-All models are trained on a single NVIDIA A5000 GPU with 24GB VRAM. To reproduce similar or better performance, we suggest using GPUs larger than 24GB or specifying `strategy: ddp` under `trainer` in `config/spin.yaml` to enable multiple GPU training. Note that the following checkpoints are reproduced with the same recipe, so the results are slightly different from our paper. The training logs can be found in this [link](https://api.wandb.ai/links/vectominist/5254la3b).
+All models are trained on a single NVIDIA A5000 GPU with 24GB VRAM. To reproduce similar or better performance, we suggest using GPUs larger than 24GB or specifying `strategy: ddp` under `trainer` in [`config/spin.yaml`](https://github.com/vectominist/spin/blob/main/config/spin.yaml) to enable multiple GPU training. Note that the following checkpoints are reproduced with the same recipe, so the results are slightly different from our paper. The training logs can be found in this [link](https://api.wandb.ai/links/vectominist/5254la3b).
 
 | Base Model | Clusters | PNMI  | Checkpoint                                                                                       |
 | ---------- | -------- | ----- | ------------------------------------------------------------------------------------------------ |
